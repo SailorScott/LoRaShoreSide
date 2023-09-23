@@ -294,18 +294,19 @@ void loop()
   {
     digitalWrite(WIFI_LED, sendData2Server);
     Serial.println("Send 2 Server");
+    sendData2Server = false;
 
-    if (WiFi.status() == WL_CONNECTED) 
+    if (WiFi.status() == WL_CONNECTED)
     // if ping
-{   // build message
-    while (Need2HaveRoom4More(&queue, strlen(txpacket)))
-    {
-      copyStringFromQueue(&queue, txpacket, RX_BUFFER_SIZE);
-    }
+    { // build message
+      while (Need2HaveRoom4More(&queue, strlen(txpacket)))
+      {
+        copyStringFromQueue(&queue, txpacket, RX_BUFFER_SIZE);
+      }
 
-    Serial.printf("\r\nSendWiFi \"%s\" length %d\r\n", txpacket, strlen(txpacket));
+      Serial.printf("\r\nSendWiFi \"%s\" length %d\r\n", txpacket, strlen(txpacket));
 
-    WiFiClient client;
+      WiFiClient client;
       HTTPClient http;
 
       http.begin(DESTIATIONSERVER);
@@ -314,23 +315,19 @@ void loop()
       http.addHeader("Content-Type", "text/plain");
       String httpRequestData = "LoRa hi there";
       // Send HTTP POST request
-       int httpResponseCode = http.POST(String(txpacket));
-       Serial.println(httpRequestData); //"PostResponse:" + String(httpResponseCode));
+      int httpResponseCode = http.POST(String(txpacket));
+      Serial.println(httpRequestData); //"PostResponse:" + String(httpResponseCode));
 
+      txpacket[0] = '\0'; // reset the tx buffer
 
-    sendData2Server = false;
-    txpacket[0] = '\0'; // reset the tx buffer
-
-    digitalWrite(WIFI_LED, sendData2Server);
-}
+      digitalWrite(WIFI_LED, sendData2Server);
+    }
   }
   if (lora_idle)
   {
     lora_idle = false;
     // sendData2Server = false;
     Serial.println("into WiFi TX mode");
-
-   
 
     Serial.println("into RX mode");
     Radio.Rx(0);
@@ -342,11 +339,11 @@ void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
   digitalWrite(LoRa_LED, HIGH);
   rxSize = size;
-  char* rx = rxpacket;
+  char *rx = rxpacket;
   memcpy(rxpacket, payload, size);
   // rxpacket[size + 1] = '\0';
-  sprintf(&rxpacket[size] , ",%d|\0", rssi); // seperator
- // rxpacket[size + 1] = '\0';
+  sprintf(&rxpacket[size], ",%d|\0", rssi); // seperator
+                                            // rxpacket[size + 1] = '\0';
   enqueue(&queue, rxpacket);
 
   Radio.Sleep();
